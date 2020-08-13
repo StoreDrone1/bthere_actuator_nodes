@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
@@ -11,6 +12,7 @@ LINEAR_SPEED_SCALE_FACTOR = 100
 STOP = 0
 
 class Motor:
+    """generic parent class for motor classes."""
     pwm_pin
     pwm_obj
     max_allowable_dc
@@ -37,10 +39,11 @@ class Motor:
         self.pwm_obj.ChangeDutyCycle(round(power))
 
     def stop():
-        self.set_power(STOP);
+        self.set_power(STOP)
         
 
 class Motor2Pin:
+    """class to control a motor (through an H-bridge) using 2 pins: pwm and direction."""
     pwm_pin
     pwm_obj
     dir_pin
@@ -68,6 +71,7 @@ class Motor2Pin:
 
 
 class Motor3Pin:
+    """class to control a motor (through an H-bridge) using 3 pins: pwm, forward, and back."""
     pwm_pin
     pwm_obj
     forward_pin
@@ -130,7 +134,7 @@ FREQ = 20
 # TODO: [for visibility]
 # !!! CONFIGURE THIS PER ROBOT !!!
 # actually todo: maybe use a config file of some kind to ensure this isn't run before being configured?
-#      it could be problematic if someone 
+#      it could be dangerous for someone to run this script unconfigured.
 motors = {}
 #
 # motors['fl'] = Motor2Pin(4, 2, GPIO.HIGH, 100, FREQ)
@@ -145,6 +149,7 @@ motors = {}
 
 
 def StopMotors():
+    """stop all motors"""
     # GPIO.output(dir_pins, GPIO.LOW)
     for motor in motors:
         motors[motor].stop()
