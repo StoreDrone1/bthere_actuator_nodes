@@ -131,13 +131,17 @@ FREQ = 20000
 #      it could be dangerous for someone to run this script unconfigured.
 motors = {}
 #
-motors['fl'] = Motor2Pin(15, 24, GPIO.LOW, 100, FREQ)
-motors['bl'] = Motor2Pin(23, 14, GPIO.LOW, 100, FREQ)
-motors['fr'] = Motor2Pin(27, 18, GPIO.HIGH, 100, FREQ)
-motors['br'] = Motor2Pin(22, 17, GPIO.HIGH, 100, FREQ)
+# motors['fl'] = Motor2Pin(15, 24, GPIO.LOW, 100, FREQ)
+# rospy.loginfo("adding motor" + "fl" + ", pwm pin: " + str(15) + ", dir pin: " + str(25))
+# motors['bl'] = Motor2Pin(23, 14, GPIO.LOW, 100, FREQ)
+# rospy.loginfo("adding motor" + "bl" + ", pwm pin: " + str(23) + ", dir pin: " + str(14))
+# motors['fr'] = Motor2Pin(27, 18, GPIO.HIGH, 100, FREQ)
+# rospy.loginfo("adding motor" + "fr" + ", pwm pin: " + str(27) + ", dir pin: " + str(18))
+# motors['br'] = Motor2Pin(22, 17, GPIO.HIGH, 100, FREQ)
+# rospy.loginfo("adding motor" + "br" + ", pwm pin: " + str(22) + ", dir pin: " + str(17))
 
 # the control mode to be used:
-control_mode = ControlMode.mecanum
+# control_mode = ControlMode.mecanum
 
 # ========================================================================================================
 
@@ -159,6 +163,10 @@ def cmd_callback(cmdMessage):
     elif control_mode == ControlMode.tank:
         right_speed = 1.0 * linear_x - angular_z
         left_speed = 1.0 * linear_x + angular_z
+
+        right_speed = max(min(right_speed, 1), -1)
+        left_speed = max(min(left_speed, 1), -1)
+        
         motors['l'].set(left_speed)
         motors['r'].set(right_speed)
     elif control_mode == ControlMode.mecanum:
