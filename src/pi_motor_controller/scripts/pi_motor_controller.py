@@ -11,22 +11,22 @@ LINEAR_SPEED_SCALE_FACTOR = 100
 # Dutycycle to switch off motors
 STOP = 0
 
-class Motor:
+class Motor(object):
     """generic parent class for motor classes."""
-    pwm_pin
-    pwm_obj
-    max_allowable_dc
-    pwm_frequency
+    pwm_pin = -1
+    pwm_obj = None
+    max_allowable_dc = 100
+    pwm_frequency = 20
 
     def __init__(self, pwm_pin, max_allowable_dc, pwm_frequency):
         self.pwm_pin = pwm_pin
         self.pwm_frequency = pwm_frequency
         self.max_allowable_dc = max_allowable_dc
         GPIO.setup(pwm_pin, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.PWM(pwm_pin, pwm_frequency)
+        self.pwm_obj = GPIO.PWM(pwm_pin, pwm_frequency)
         self.pwm_obj.start(0) #start stopped
 
-    def set_power(power):
+    def set_power(self, power):
         """set only the power pwm."""
         if power < 0 or power > 1:
             raise ValueError("set_power can only take a value between 0 and 1.")
@@ -35,68 +35,62 @@ class Motor:
         # To achieve linear response use the square of the normalized speeds
         power *= abs(power)
         power *= LINEAR_SPEED_SCALE_FACTOR
-        power = min(power, max_allowable_dc)
+        power = min(power, self.max_allowable_dc)
         self.pwm_obj.ChangeDutyCycle(round(power))
 
-    def stop():
+    def stop(self):
         self.set_power(STOP)
         
 
-class Motor2Pin:
+class Motor2Pin(Motor):
     """class to control a motor (through an H-bridge) using 2 pins: pwm and direction."""
-    pwm_pin
-    pwm_obj
-    dir_pin
-    dir_forward_val
-    dir_backward_val
-    max_allowable_dc
+    dir_pin = -1
+    dir_forward_val = -1
+    dir_backward_val = -1
 
     def __init__(self, pwm_pin, dir_pin, dir_forward_val, max_allowable_dc, pwm_frequency):
-        super.__init__()
+        super(Motor2Pin, self).__init__(pwm_pin, max_allowable_dc, pwm_frequency)
         self.dir_pin = dir_pin
         self.dir_forward_val = dir_forward_val
         self.dir_backward_val = GPIO.HIGH if dir_forward_val == GPIO.LOW else GPIO.LOW
         GPIO.setup(dir_pin, GPIO.OUT, initial=dir_forward_val)
 
-    def set(power):
+    def set(self, power):
         """sets power and direction, using power, a value between -1 (backwards) and 1 (forwards)"""
         if power > 1 or power < -1:
             raise ValueException("set() can only take a value between -1 and 1.")
 
-        set_power(abs(power))
+        self.set_power(abs(power))
         if power > 0: #forwards
-            GPIO.output(dir_pin, dir_forward_val)
+            GPIO.output(self.dir_pin, self.dir_forward_val)
         elif power < 0: #backwards
-            GPIO.output(dir_pin, dir_backward_val)
+            GPIO.output(self.dir_pin, self.dir_backward_val)
 
 
-class Motor3Pin:
+class Motor3Pin(Motor):
     """class to control a motor (through an H-bridge) using 3 pins: pwm, forward, and back."""
-    pwm_pin
-    pwm_obj
-    forward_pin
-    backward_pin
-    max_allowable_dc
+    forward_pin = -1
+    backward_pin = -1
 
     def __init__(self, pwm_pin, forward_pin, backward_pin, max_allowable_dc, pwm_frequency):
-        super.__init__()
+        super(Motor3Pin, self).__init__(pwm_pin, max_allowable_dc, pwm_frequency)
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
         GPIO.setup([forward_pin, backward_pin], GPIO.OUT, initial=GPIO.LOW)
 
-    def set(power):
+    def set(self, power):
         """sets power and direction, using power, a value between -1 (backwards) and 1 (forwards)"""
         if power > 1 or power < -1:
             raise ValueException("set() can only take a value between -1 and 1.")
         
-        set_power(abs(power))
+        self.set_power(abs(power))
 
         if power > 0: #forwards
-            GPIO.output(forward_pin, GPIO.HIGH)
-            GPIO.output(backward_pin, GPIO.LOW)
+            GPIO.output(self.forward_pin, GPIO.HIGH)
+            GPIO.output(self.backward_pin, GPIO.LOW)
         elif power < 0: #backwards
-            GPIO.output(forward_pin, GPIO.LOW)
-            GPIO.output(backward_pin, GPIO.HIGH)
+            GPIO.output(self.forward_pin, GPIO.LOW)
+            GPIO.output(self.backward_pin, GPIO.HIGH)
             
 
 class ControlMode(enum.Enum):
@@ -126,10 +120,10 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 # Maximum allowable dutycycle
-MAX_ALLOWABLE_DC = 73
+MAX_ALLOWABLE_DC = 100
 
 # Hertz
-FREQ = 20
+FREQ = 20000
 
 # TODO: [for visibility]
 # !!! CONFIGURE THIS PER ROBOT !!!
@@ -137,13 +131,13 @@ FREQ = 20
 #      it could be dangerous for someone to run this script unconfigured.
 motors = {}
 #
-# motors['fl'] = Motor2Pin(4, 2, GPIO.HIGH, 100, FREQ)
-# motors['bl'] = Motor2Pin(14, 3, GPIO.HIGH, 100, FREQ)
-# motors['fr'] = Motor2Pin(27, 18, GPIO.HIGH, 100, FREQ)
-# motors['br'] = Motor2Pin(22, 17, GPIO.HIGH, 100, FREQ)
+motors['fl'] = Motor2Pin(15, 24, GPIO.LOW, 100, FREQ)
+motors['bl'] = Motor2Pin(23, 14, GPIO.LOW, 100, FREQ)
+motors['fr'] = Motor2Pin(27, 18, GPIO.HIGH, 100, FREQ)
+motors['br'] = Motor2Pin(22, 17, GPIO.HIGH, 100, FREQ)
 
 # the control mode to be used:
-#control_mode = ControlMode.mecanum
+control_mode = ControlMode.mecanum
 
 # ========================================================================================================
 
@@ -159,7 +153,7 @@ def cmd_callback(cmdMessage):
     linear_x = cmdMessage.linear.x
     angular_z = cmdMessage.angular.z
     
-    if control_mode == none:
+    if control_mode == None:
         rospy.logerr("cannot run rpi motor controller, control_mode not set!"
                     + "\nMake sure you have configured the script before use!")
     elif control_mode == ControlMode.tank:
@@ -173,14 +167,19 @@ def cmd_callback(cmdMessage):
         bl_speed = cmdMessage.linear.x - cmdMessage.linear.y - angular_z
         br_speed = cmdMessage.linear.x + cmdMessage.linear.y + angular_z
 
-        rospy.loginfo("fr power: " + fr_speed)
-        rospy.loginfo("fl power: " + fl_speed)
-        rospy.loginfo("br power: " + br_speed)
-        rospy.loginfo("bl power: " + bl_speed)
+        fr_speed = max(min(fr_speed, 1), -1)
+        fl_speed = max(min(fl_speed, 1), -1)
+        br_speed = max(min(br_speed, 1), -1)
+        bl_speed = max(min(bl_speed, 1), -1)
+        
+        rospy.loginfo("fr power: " + str(fr_speed))
+        rospy.loginfo("fl power: " + str(fl_speed))
+        rospy.loginfo("br power: " + str(br_speed))
+        rospy.loginfo("bl power: " + str(bl_speed))
 
         motors['fr'].set(fr_speed)
         motors['fl'].set(fl_speed)
-        motors['br'].set(bl_speed)
+        motors['bl'].set(bl_speed)
         motors['br'].set(br_speed)
 
     # You should build in a deadman switch, however, the bThereClient already has one
