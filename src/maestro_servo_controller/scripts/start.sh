@@ -1,0 +1,1 @@
+./bthere_servos config_file=bthere.cfg mock_servos=False

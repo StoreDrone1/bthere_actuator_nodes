@@ -1,0 +1,4 @@
+#! /usr/bin/env python
+import servos
+if __name__ == '__main__':
+    servos.main()
