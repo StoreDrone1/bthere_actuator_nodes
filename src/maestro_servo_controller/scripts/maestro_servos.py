@@ -104,13 +104,12 @@ def get_servo_data_value(percent):
     return int((((float(percent)/100) * servo_range) + servo_min) * servo_scale_factor)
 
 
-def panTilt(parameter):
-    blog.i('panTilt input: ' + parameter)
-    amounts = string.split(parameter)
+def panTilt(panValue, tiltValue):
+    blog.i('panTilt input. Pan: ' + str(panValue) + ' Tilt: ' + str(tiltValue))
     global currentPan
     global currentTilt
-    newPan = currentPan + int(amounts[0])
-    newTilt = currentTilt + int(amounts[1])
+    newPan = currentPan + panValue
+    newTilt = currentTilt + tiltValue
     pan(newPan)
     tilt(newTilt)
 
