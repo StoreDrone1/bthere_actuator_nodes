@@ -1,5 +1,6 @@
-__author__ = "Stuart Marshall & Matt Wenger"
 __copyright__ = "Copyright 2019, bThere.ai"
+
+# This file is a utility wrapper for logging. It helps with log levels and logging to console plus file
 
 import datetime
 import sys

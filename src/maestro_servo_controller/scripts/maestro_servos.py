@@ -1,8 +1,11 @@
-__author__ = "Stuart Marshall"
 __copyright__ = "Copyright 2019, bThere.ai"
 
+# This file handles communication with a Pololu maestro servo controller.
+# This file assumes communication is in USB dual mode.
+# There's also an assumption that there are two servos attached to the controller, on channels 1 and 2.
+
 import config
-import blog
+import bthere_log
 import os.path
 import binascii
 import math
@@ -10,15 +13,13 @@ import string
 import struct
 import time
 
-__author__ = 'stuart'
-
 print("maestro_servos")
 
 if config.args['mock_servos']:
-    blog.i("Using mock serial")
+    bthere_log.i("Using mock serial")
     import serial_mock as serial
 else:
-    blog.i("Using real serial")
+    bthere_log.i("Using real serial")
     import serial as serial
 
 # mac ports are not valid - just guesses right now
@@ -34,17 +35,18 @@ if config.args['platform'] == "linux":
         "maestro_command_serial_port", command_port_linux)
     ttl_serial_port = config.get_config_or_default(
         "maestro_ttl_serial_port", ttl_serial_port_linux)
-    blog.i("Linux platform, so setting command serial port to " +
-           command_serial_port + " and ttl serial port to " + ttl_serial_port)
+    bthere_log.i("Linux platform, so setting command serial port to " +
+                 command_serial_port + " and ttl serial port to " + ttl_serial_port)
 elif config.args['platform'] == "mac":
     command_serial_port = config.get_config_or_default(
         "maestro_command_serial_port", command_port_mac)
     ttl_serial_port = config.get_config_or_default(
         "maestro_ttl_serial_port", ttl_serial_port_mac)
-    blog.i("Mac platform, so setting command serial port to " +
-           command_serial_port + " and ttl serial port to " + ttl_serial_port)
+    bthere_log.i("Mac platform, so setting command serial port to " +
+                 command_serial_port + " and ttl serial port to " + ttl_serial_port)
 else:
-    blog.e("Can't set serial port because platform is neither linux nor mac")
+    bthere_log.e(
+        "Can't set serial port because platform is neither linux nor mac")
     command_serial_port = ""
     ttl_serial_port = ""
 
@@ -96,7 +98,7 @@ def cleanup():
     if ser is not None:
         ser.close()
         ser = None
-    blog.i("serial cleaned up")
+    bthere_log.i("serial cleaned up")
 
 
 def get_servo_data_value(percent):
@@ -105,7 +107,8 @@ def get_servo_data_value(percent):
 
 
 def panTilt(panValue, tiltValue):
-    blog.i('panTilt input. Pan: ' + str(panValue) + ' Tilt: ' + str(tiltValue))
+    bthere_log.i('panTilt input. Pan: ' + str(panValue) +
+                 ' Tilt: ' + str(tiltValue))
     global currentPan
     global currentTilt
     newPan = currentPan + panValue
@@ -122,7 +125,7 @@ def pan(amount):
     currentPan = amount
     data = get_servo_data_value(amount)
     control_servo(pan_servo_channel, data)
-    blog.i("Panning to " + str(amount))
+    bthere_log.i("Panning to " + str(amount))
 
 
 def tilt(amount):
@@ -133,7 +136,7 @@ def tilt(amount):
     currentTilt = amount
     data = get_servo_data_value(amount)
     control_servo(tilt_servo_channel, data)
-    blog.i("Tilting to " + str(amount))
+    bthere_log.i("Tilting to " + str(amount))
 
 
 def control_servo(channel, amount):
@@ -154,9 +157,9 @@ def reset_cameras():
 
 def pack(number):
     packed = struct.pack("B", number)
-    blog.i(binascii.hexlify(packed))
+    bthere_log.i(binascii.hexlify(packed))
     if verbose:
-        blog.i("Packed data: " + binascii.hexlify(packed))
+        bthere_log.i("Packed data: " + binascii.hexlify(packed))
     return packed
 
 
@@ -164,7 +167,7 @@ def pack_command_to_channel(channel, command, data):
     packed = struct.pack("BBBB", command, channel,
                          data & 0x7F, (data >> 7) & 0x7F)
     if verbose:
-        blog.i("Packed data: " + binascii.hexlify(packed))
+        bthere_log.i("Packed data: " + binascii.hexlify(packed))
     return packed
 
 
@@ -174,15 +177,16 @@ def setup():
     if not is_setup:
         # spin looking to make sure the ttyUSB exists
         if config.args['mock_servos']:
-            blog.i(
+            bthere_log.i(
                 "Using mock serial, so not gonna check if the serial port device exists")
         else:
             if os.path.exists(command_serial_port) is False:
-                blog.i("Serial port not available yet. Waiting " +
-                       str(time_to_wait_for_usb) + " milliseconds in hopes that it'll show up")
+                bthere_log.i("Serial port not available yet. Waiting " +
+                             str(time_to_wait_for_usb) + " milliseconds in hopes that it'll show up")
                 time.sleep(time_to_wait_for_usb/1000.0)
                 if os.path.exists(command_serial_port) is False:
-                    blog.e("Serial port still isn't available. Giving up")
+                    bthere_log.e(
+                        "Serial port still isn't available. Giving up")
                     raise Exception(
                         "Serial port not available: " + command_serial_port)
         ser = serial.Serial(
@@ -194,4 +198,4 @@ def setup():
             timeout=0,
             write_timeout=0)
         is_setup = True
-        blog.i("connected to: " + ser.portstr)
+        bthere_log.i("connected to: " + ser.portstr)

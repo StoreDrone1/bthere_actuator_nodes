@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-import blog
+# This is the main code that listens on a ROS topic, interprets received twists and calls the servo code
+
+__copyright__ = "Copyright 2020, bThere.ai"
+
+import bthere_log
 import rospy
 import std_msgs
 from geometry_msgs.msg import Twist
@@ -15,8 +19,8 @@ def callback(twist):
     tilt = int(twist.angular.y * increment_scalar)
     if (pan == 0 and tilt == 0):
         return
-    blog.i('Pan incrementing by ' + str(pan) +
-           ' Tilt incrementing by ' + str(tilt))
+    bthere_log.i('Pan incrementing by ' + str(pan) +
+                 ' Tilt incrementing by ' + str(tilt))
     maestro_servos.panTilt(pan, tilt)
 
 
@@ -27,7 +31,7 @@ def listener(topic):
 
 
 def main():
-    blog.i("bthere_servos running...")
+    bthere_log.i("bthere_servos running...")
     topic = rospy.get_param("~topic_name", "/camera_servo1/teleop")
     maestro_servos.setup()
     listener(topic)

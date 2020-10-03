@@ -1,18 +1,18 @@
-__author__ = "Stuart Marshall"
 __copyright__ = "Copyright 2019, bThere.ai"
 
-import MLog
+import bthere_log
+
 
 def cleanup():
-    MLog.i("servo mock cleaned up")
+    bthere_log.i("servo mock cleaned up")
 
 
 def pan(amount):
-    MLog.i("servo mock panning to " + str(amount))
+    bthere_log.i("servo mock panning to " + str(amount))
 
 
 def tilt(amount):
-    MLog.i("servo mock tilting to " + str(amount))
+    bthere_log.i("servo mock tilting to " + str(amount))
 
 
 def reset_cameras():
@@ -25,5 +25,4 @@ def reset_cameras():
 
 
 def setup():
-    MLog.i("mock servos setup")
-
+    bthere_log.i("mock servos setup")

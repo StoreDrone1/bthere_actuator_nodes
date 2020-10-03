@@ -1,7 +1,8 @@
-__author__ = "Stuart Marshall"
 __copyright__ = "Copyright 2019, bThere.ai"
 
-import blog
+# This file assist with testing the outer code without the actual presence of or communication with a servo controller
+
+import bthere_log
 
 
 PARITY_NONE = True
@@ -13,13 +14,13 @@ class Serial(object):
 
     def __init__(self, port, baudrate, parity, stopbits, bytesize, timeout, write_timeout):
         self.portstr = port
-        blog.i("mock Serial.__init__")
+        bthere_log.i("mock Serial.__init__")
 
     def close(self):
-        blog.i("Serial mock close called")
+        bthere_log.i("Serial mock close called")
 
     def write(self, data):
-        blog.i("Serial mock write called")
+        bthere_log.i("Serial mock write called")
 
     def flushOutput(self):
-        blog.i("Serial mock flushOutput called")
+        bthere_log.i("Serial mock flushOutput called")
