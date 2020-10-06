@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+__copyright__ = "Copyright 2020, bThere.ai"
+
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
@@ -11,6 +13,7 @@ LINEAR_SPEED_SCALE_FACTOR = 100
 
 # Dutycycle to switch off motors
 STOP = 0
+
 
 class Motor(object):
     """generic parent class for motor classes."""
@@ -25,13 +28,14 @@ class Motor(object):
         self.max_allowable_dc = max_allowable_dc
         GPIO.setup(pwm_pin, GPIO.OUT, initial=GPIO.LOW)
         self.pwm_obj = GPIO.PWM(pwm_pin, pwm_frequency)
-        self.pwm_obj.start(0) #start stopped
+        self.pwm_obj.start(0)  # start stopped
 
     def set_power(self, power):
         """set only the power pwm."""
         if power < 0 or power > 1:
-            raise ValueError("set_power can only take a value between 0 and 1.")
-        
+            raise ValueError(
+                "set_power can only take a value between 0 and 1.")
+
         # To achieve linear response use the square of the normalized speeds
         power *= abs(power)
         power *= LINEAR_SPEED_SCALE_FACTOR
@@ -40,7 +44,7 @@ class Motor(object):
 
     def stop(self):
         self.set_power(STOP)
-        
+
 
 class Motor2Pin(Motor):
     """class to control a motor (through an H-bridge) using 2 pins: pwm and direction.
@@ -54,23 +58,25 @@ class Motor2Pin(Motor):
     dir_backward_val = -1
 
     def __init__(self, pwm_pin, dir_pin, dir_forward_val, max_allowable_dc, pwm_frequency):
-        super(Motor2Pin, self).__init__(pwm_pin, max_allowable_dc, pwm_frequency)
+        super(Motor2Pin, self).__init__(
+            pwm_pin, max_allowable_dc, pwm_frequency)
         self.dir_pin = dir_pin
         self.dir_forward_val = dir_forward_val
         self.dir_backward_val = GPIO.HIGH if dir_forward_val == GPIO.LOW else GPIO.LOW
         GPIO.setup(dir_pin, GPIO.OUT, initial=dir_forward_val)
-        print("Adding Motor2Pin - pwm_pin: " + pwm_pin + ", direction pin: " + dir_pin + 
-        "forward value: " + ("high" if dir_forward_val == GPIO.HIGH else "low"))
+        print("Adding Motor2Pin - pwm_pin: " + pwm_pin + ", direction pin: " + dir_pin +
+              "forward value: " + ("high" if dir_forward_val == GPIO.HIGH else "low"))
 
     def set(self, power):
         """sets power and direction, using power, a value between -1 (backwards) and 1 (forwards)"""
         if power > 1 or power < -1:
-            raise ValueException("set() can only take a value between -1 and 1.")
+            raise ValueException(
+                "set() can only take a value between -1 and 1.")
 
         self.set_power(abs(power))
-        if power > 0: #forwards
+        if power > 0:  # forwards
             GPIO.output(self.dir_pin, self.dir_forward_val)
-        elif power < 0: #backwards
+        elif power < 0:  # backwards
             GPIO.output(self.dir_pin, self.dir_backward_val)
 
 
@@ -86,30 +92,31 @@ class Motor3Pin(Motor):
     backward_pin = -1
 
     def __init__(self, pwm_pin, forward_pin, backward_pin, max_allowable_dc, pwm_frequency):
-        super(Motor3Pin, self).__init__(pwm_pin, max_allowable_dc, pwm_frequency)
+        super(Motor3Pin, self).__init__(
+            pwm_pin, max_allowable_dc, pwm_frequency)
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
         GPIO.setup([forward_pin, backward_pin], GPIO.OUT, initial=GPIO.LOW)
         print("Adding Motor3Pin - pwm_pin: " + pwm_pin + ", forward pin: " + forward_pin + ", backward "
-         + "pin:" + backward_pin)
+              + "pin:" + backward_pin)
 
 # print("adding motor" + "br" + ", pwm pin: " + str(22) + ", dir pin: " + str(17))
-
 
     def set(self, power):
         """sets power and direction, using power, a value between -1 (backwards) and 1 (forwards)"""
         if power > 1 or power < -1:
-            raise ValueException("set() can only take a value between -1 and 1.")
-        
+            raise ValueException(
+                "set() can only take a value between -1 and 1.")
+
         self.set_power(abs(power))
 
-        if power > 0: #forwards
+        if power > 0:  # forwards
             GPIO.output(self.forward_pin, GPIO.HIGH)
             GPIO.output(self.backward_pin, GPIO.LOW)
-        elif power < 0: #backwards
+        elif power < 0:  # backwards
             GPIO.output(self.forward_pin, GPIO.LOW)
             GPIO.output(self.backward_pin, GPIO.HIGH)
-            
+
 
 class ControlMode(enum.Enum):
     """supported types of control.
@@ -138,10 +145,10 @@ MAX_ALLOWABLE_DC = 100
 #      it could be dangerous for someone to run this script unconfigured.
 motors = {}
 
-# EXAMPLE CONFIG: 
+# EXAMPLE CONFIG:
 #   This is the configuration for a mecanum-drive based robot using two Cytron MDD10A motor controllers.
-#   The Motor2Pin constructor takes 5 arguments: the pwm pin #, the direction pin #, the pin status 
-#   (GPIO.HIGH vs GPIO.LOW) that is "forward", the maximum allowable duty cycle (0-100, to avoid burning 
+#   The Motor2Pin constructor takes 5 arguments: the pwm pin #, the direction pin #, the pin status
+#   (GPIO.HIGH vs GPIO.LOW) that is "forward", the maximum allowable duty cycle (0-100, to avoid burning
 #   out motors with too high of voltage), and the PWM freqency.
 #   See the Motor2Pin docstring for more info on this class.
 #
@@ -193,17 +200,17 @@ def set_and_log_pwr(motorname, power):
 def cmd_callback(cmdMessage):
     linear_x = cmdMessage.linear.x
     angular_z = cmdMessage.angular.z
-    
+
     if control_mode == None:
         rospy.logerr("cannot run rpi motor controller, control_mode not set!"
-                    + "\nMake sure you have configured the script before use!")
+                     + "\nMake sure you have configured the script before use!")
     elif control_mode == ControlMode.tank:
         right_speed = 1.0 * linear_x - angular_z
         left_speed = 1.0 * linear_x + angular_z
 
         set_and_log_pwr("l", left_speed)
         set_and_log_pwr("r", right_speed)
-    
+
     elif control_mode == ControlMode.mecanum:
         fr_speed = cmdMessage.linear.x - cmdMessage.linear.y + angular_z
         fl_speed = cmdMessage.linear.x + cmdMessage.linear.y - angular_z
@@ -215,8 +222,8 @@ def cmd_callback(cmdMessage):
         set_and_log_pwr("bl", bl_speed)
         set_and_log_pwr("br", br_speed)
 
-    # This script should optimally be using a deadman switch so 
-    # if whatever is publishing to the input topic breaks, the 
+    # This script should optimally be using a deadman switch so
+    # if whatever is publishing to the input topic breaks, the
     # robot doesn't go driving off ad infinitum
 
 
@@ -231,8 +238,8 @@ def create_node():
 
 
 if __name__ == '__main__':
-    rospy.logerr("cannot run rpi motor controller, control_mode not set!" 
-                + "\nMake sure you have configured the script before use!")
+    rospy.logerr("cannot run rpi motor controller, control_mode not set!"
+                 + "\nMake sure you have configured the script before use!")
     sys.exit()
 
     create_node()

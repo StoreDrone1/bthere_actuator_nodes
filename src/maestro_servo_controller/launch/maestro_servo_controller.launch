@@ -1,0 +1,7 @@
+<launch>
+  <arg name="topic_name" default="/camera_servo1/teleop" />
+
+  <node name="maestro_servo_controller" pkg="maestro_servo_controller" type="bthere_servos" output="screen">
+    <param name="topin_name" value="$(arg topic_name)" />
+  </node>
+</launch>
