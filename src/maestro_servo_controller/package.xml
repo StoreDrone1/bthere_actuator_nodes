@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pi_motor_controller</name>
+  <name>maestro_servo_controller</name>
   <version>0.0.1</version>
-  <description>ROS node for controlling motors with an H-bridge</description>
+  <description>ROS node for controlling servos with a Pololu maestro servo controllere</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
