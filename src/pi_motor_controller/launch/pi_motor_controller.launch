@@ -2,6 +2,6 @@
   <arg name="topic_name" default="/cmd_vel/teleop" />
 
   <node name="pi_motor_controller" pkg="pi_motor_controller" type="pi_motor_controller.py" output="screen">
-    <param name="topin_name" value="$(arg topic_name)" />
+    <param name="topic_name" value="$(arg topic_name)" />
   </node>
 </launch>
