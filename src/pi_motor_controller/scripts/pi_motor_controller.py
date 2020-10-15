@@ -97,8 +97,8 @@ class Motor3Pin(Motor):
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
         GPIO.setup([forward_pin, backward_pin], GPIO.OUT, initial=GPIO.LOW)
-        print("Adding Motor3Pin - pwm_pin: " + pwm_pin + ", forward pin: " + forward_pin + ", backward "
-              + "pin:" + backward_pin)
+        print("Adding Motor3Pin - pwm_pin: " + str(pwm_pin) + ", forward pin: " + str(forward_pin) + ", backward "
+         + "pin:" + str(backward_pin))
 
 # print("adding motor" + "br" + ", pwm pin: " + str(22) + ", dir pin: " + str(17))
 
@@ -137,15 +137,15 @@ GPIO.setwarnings(False)
 MAX_ALLOWABLE_DC = 100
 
 # PWM Frequency.
-# this is going to depend on your motors and H-bridge.
+# This is going to depend on your motors and H-bridge.
+FREQ = 20
 
-# TODO: [for visibility]
 # !!! CONFIGURE THIS PER ROBOT !!!
 # actually todo: maybe use a config file of some kind to ensure this isn't run before being configured?
 #      it could be dangerous for someone to run this script unconfigured.
 motors = {}
 
-# EXAMPLE CONFIG:
+# EXAMPLE CONFIG (Mecanum Drive):
 #   This is the configuration for a mecanum-drive based robot using two Cytron MDD10A motor controllers.
 #   The Motor2Pin constructor takes 5 arguments: the pwm pin #, the direction pin #, the pin status
 #   (GPIO.HIGH vs GPIO.LOW) that is "forward", the maximum allowable duty cycle (0-100, to avoid burning
@@ -160,22 +160,18 @@ motors = {}
 # the control mode to be used:
 # control_mode = ControlMode.mecanum
 
-# EXAMPLE CONFIG:
+# EXAMPLE CONFIG (Tank Drive):
 #   This shows an example of how this script can be configured to control a robot that uses a tank-style
 #   chassis and an L298N H-bridge.
-#   the Motor3Pin constructor takes the same parameters as Motor2Pin, but instead of taking direction pin
+#   The Motor3Pin constructor takes the same parameters as Motor2Pin, but instead of taking direction pin
 #   number and a value for which is forward, it takes a forward pin and backward pin number.
-#   for more info see the docstring for Motor3Pin.
+#   For more info see the docstring for Motor3Pin.
 #
-# motors['l'] = Motor3Pin(15, 24, 23, 100, FREQ)
-# motors['r'] = Motor3Pin(14, 27, 18, 100, FREQ)
+motors['r'] = Motor3Pin(13, 27, 22, 100, FREQ)
+motors['l'] = Motor3Pin(12, 17, 18, 100, FREQ)
 #
-# the control mode to be used:
-# control_mode = ControlMode.tank
-
-
-# FIXME: uncomment out this next line once you've added your configuration.
-control_mode = None
+# The control mode to be used:
+control_mode = ControlMode.tank
 
 # ========================================================================================================
 
@@ -238,9 +234,10 @@ def create_node():
 
 
 if __name__ == '__main__':
-    rospy.logerr("cannot run rpi motor controller, control_mode not set!"
-                 + "\nMake sure you have configured the script before use!")
-    sys.exit()
+    if control_mode == None:
+        rospy.logerr("Cannot run rpi motor controller, control_mode not set!" 
+                + "\nMake sure you have configured the script before use!")
+        sys.exit()
 
     create_node()
     init_subscriber()
