@@ -68,6 +68,8 @@ baud_rate = 0xAA
 default_controller_address = 12
 pan_servo_channel = 0
 tilt_servo_channel = 1
+pan_servo2_channel = 2
+tilt_servo2_channel = 3
 
 set_target_cmd = 0x84
 
@@ -80,8 +82,10 @@ servo_min = 2100
 servo_max = 900
 servo_scale_factor = 4
 
-currentPan = 50
-currentTilt = 50
+currentPan1 = 50
+currentTilt1 = 50
+currentPan2 = 50
+currentTilt2 = 50
 
 
 def clamp(input, lower_bound, upper_bound):
@@ -106,38 +110,64 @@ def get_servo_data_value(percent):
     return int((((float(percent)/100) * servo_range) + servo_min) * servo_scale_factor)
 
 
-def panTilt(panValue, tiltValue):
+def panTilt(panValue, tiltValue, servoNum):
     bthere_log.i('panTilt input. Pan: ' + str(panValue) +
                  ' Tilt: ' + str(tiltValue))
-    global currentPan
-    global currentTilt
-    newPan = currentPan + panValue
-    newTilt = currentTilt + tiltValue
-    pan(newPan)
-    tilt(newTilt)
+    global currentPan1
+    global currentTilt1
+    global currentPan2
+    global currentTilt2
+    
+    if servoNum == 1:
+        newPan = currentPan1 + panValue
+        newTilt = currentTilt1 + tiltValue
+        pan(newPan, servoNum)
+        tilt(newTilt, servoNum)
+    if servoNum == 2:
+        newPan = currentPan2 + panValue
+        newTilt = currentTilt2 + tiltValue
+        pan(newPan, servoNum)
+        tilt(newTilt, servoNum)
 
-
-def pan(amount):
+def pan(amount, servoNum):
     amount = clamp(amount, 0, 100)
-    global currentPan
-    if amount == currentPan:
-        return
-    currentPan = amount
-    data = get_servo_data_value(amount)
-    control_servo(pan_servo_channel, data)
-    bthere_log.i("Panning to " + str(amount))
+    global currentPan1
+    global currentPan2
+    
+    if servoNum == 1:
+        if amount == currentPan1:
+            return
+        currentPan1 = amount
+        data = get_servo_data_value(amount)
+        control_servo(pan_servo_channel, data)
+        bthere_log.i("Panning to " + str(amount) + " on servo: " + str(servoNum))
+    if servoNum == 2:
+        if amount == currentPan2:
+            return
+        currentPan2 = amount
+        data = get_servo_data_value(amount)
+        control_servo(pan_servo2_channel, data)
+        bthere_log.i("Panning to " + str(amount) + " on servo: " + str(servoNum))
 
-
-def tilt(amount):
+def tilt(amount, servoNum):
     amount = clamp(amount, 0, 100)
-    global currentTilt
-    if amount == currentTilt:
-        return
-    currentTilt = amount
-    data = get_servo_data_value(amount)
-    control_servo(tilt_servo_channel, data)
-    bthere_log.i("Tilting to " + str(amount))
-
+    global currentTilt1
+    global currentTilt2
+    
+    if servoNum == 1:
+        if amount == currentTilt1:
+            return
+        currentTilt1 = amount
+        data = get_servo_data_value(amount)
+        control_servo(tilt_servo_channel, data)
+        bthere_log.i("Tilting to " + str(amount) + " on servo: " + str(servoNum))
+    if servoNum == 2:
+        if amount == currentTilt2:
+            return
+        currentTilt2 = amount
+        data = get_servo_data_value(amount)
+        control_servo(tilt_servo2_channel, data)
+        bthere_log.i("Tilting to " + str(amount) + " on servo: " + str(servoNum))
 
 def control_servo(channel, amount):
     packed = pack_command_to_channel(channel, set_target_cmd, amount)
@@ -151,8 +181,10 @@ def reset_cameras():
     global tilt_position
     pan_position = 50
     tilt_position = 50
-    pan(pan_position)
-    tilt(tilt_position)
+    pan(pan_position, 1)
+    pan(pan_position, 2)
+    tilt(tilt_position, 1)
+    tilt(tilt_position, 2)
 
 
 def pack(number):
